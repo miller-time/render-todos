@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate rocket;
 
-use rocket::serde::json::Json;
+use rocket::{fairing::AdHoc, http::Header, serde::json::Json};
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
@@ -31,5 +31,14 @@ fn list_todos() -> Json<Vec<Todo>> {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![list_todos])
+    rocket::build()
+        .attach(AdHoc::on_response("cors", |_request, response| {
+            Box::pin(async move {
+                response.set_header(Header::new(
+                    "Access-Control-Allow-Origin",
+                    "https://todos-client-wke8.onrender.com",
+                ));
+            })
+        }))
+        .mount("/", routes![list_todos])
 }
