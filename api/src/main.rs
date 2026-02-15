@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate rocket;
 
+use std::env;
+
+use diesel::{Connection, PgConnection};
 use rocket::{fairing::AdHoc, http::Header, serde::json::Json};
 use serde::Serialize;
 
@@ -12,21 +15,29 @@ struct Todo {
 
 #[get("/todos")]
 fn list_todos() -> Json<Vec<Todo>> {
+    let _ = connect_db();
+    log::info!("db connected!");
     let todos = vec![
-        Todo {
-            text: String::from("implement api"),
-            completed: true,
-        },
-        Todo {
-            text: String::from("connect client to api"),
-            completed: true,
-        },
-        Todo {
-            text: String::from("connect api to db"),
-            completed: false,
-        },
+        // Todo {
+        //     text: String::from("implement api"),
+        //     completed: true,
+        // },
+        // Todo {
+        //     text: String::from("connect client to api"),
+        //     completed: true,
+        // },
+        // Todo {
+        //     text: String::from("connect api to db"),
+        //     completed: false,
+        // },
     ];
     Json(todos)
+}
+
+fn connect_db() -> PgConnection {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    PgConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
 #[launch]
