@@ -19,7 +19,7 @@ fn list_todos() -> Json<Vec<Todo>> {
         },
         Todo {
             text: String::from("connect client to api"),
-            completed: false,
+            completed: true,
         },
         Todo {
             text: String::from("connect api to db"),
