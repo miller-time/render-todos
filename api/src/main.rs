@@ -3,35 +3,28 @@ extern crate rocket;
 
 use std::env;
 
-use diesel::{Connection, PgConnection};
+use diesel::{Connection, PgConnection, prelude::*};
 use rocket::{fairing::AdHoc, http::Header, serde::json::Json};
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Queryable, Selectable, Serialize)]
+#[diesel(table_name = todos_api::schema::todos)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 struct Todo {
+    id: i32,
     text: String,
     completed: bool,
 }
 
 #[get("/todos")]
 fn list_todos() -> Json<Vec<Todo>> {
-    let _ = connect_db();
-    log::info!("db connected!");
-    let todos = vec![
-        // Todo {
-        //     text: String::from("implement api"),
-        //     completed: true,
-        // },
-        // Todo {
-        //     text: String::from("connect client to api"),
-        //     completed: true,
-        // },
-        // Todo {
-        //     text: String::from("connect api to db"),
-        //     completed: false,
-        // },
-    ];
-    Json(todos)
+    use todos_api::schema::todos::dsl::*;
+    let connection = &mut connect_db();
+    let results = todos
+        .select(Todo::as_select())
+        .load(connection)
+        .expect("failed to query todos");
+    Json(results)
 }
 
 fn connect_db() -> PgConnection {
